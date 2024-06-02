@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Stream Viewer</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            background-color: #0e0e0e;
+            background-image: url('{% if theme == 'green' %}/static/images/kick_bg.png{% elif theme == 'purple' %}/static/images/cx_bg.png{% elif theme == 'black' %}/static/images/black_bg.png{% else %}/static/images/light_bg.png{% endif %}');
+            background-size: cover;
+            cursor: auto;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: #161616;
+            border-bottom: 2px solid {% if theme == 'green' %}#00ff00{% elif theme == 'purple' %}#800080{% elif theme == 'black' %}#ffffff{% else %}#008080{% endif %};
+        }
+        .header .left, .header .right {
+            display: flex;
+            align-items: center;
+        }
+        .header .left {
+            justify-content: flex-start;
+        }
+        .header .right {
+            justify-content: flex-end;
+        }
+        .header h1 {
+            margin: 0 20px;
+            color: {% if theme == 'green' %}#00ff00{% elif theme == 'purple' %}#800080{% elif theme == 'black' %}#ffffff{% else %}#008080{% endif %};
+            text-align: center;
+            flex-grow: 1;
+        }
+        .header h1 a {
+            color: inherit;
+            text-decoration: none;
+        }
+        .theme-selection {
+            display: flex;
+            align-items: center;
+        }
+        .theme-button {
+            padding: 5px 10px;
+            margin: 0 5px;
+            cursor: pointer;
+            border: none;
+            color: #000;
+        }
+        .green-button {
+            background-color: #00ff00;
+        }
+        .purple-button {
+            background-color: #800080;
+        }
+        .black-button {
+            background-color: #000000;
+            color: #ffffff;
+        }
+        .light-button {
+            background-color: #008080;
+            color: #ffffff;
+        }
+        .change-streams {
+            display: flex;
+            align-items: center;
+        }
+        .change-streams input {
+            margin-right: 5px;
+            padding: 5px;
+            border: 1px solid {% if theme == 'green' %}#00ff00{% elif theme == 'purple' %}#800080{% elif theme == 'black' %}#ffffff{% else %}#008080{% endif %};
+            background-color: #161616;
+            color: {% if theme == 'green' %}#00ff00{% elif theme == 'purple' %}#800080{% elif theme == 'black' %}#ffffff{% else %}#008080{% endif %};
+        }
+        .change-stream-button {
+            background-color: {% if theme == 'green' %}#00ff00{% elif theme == 'purple' %}#800080{% elif theme == 'black' %}#ffffff{% else %}#008080{% endif %};
+        }
+        .stream-container {
+            display: flex;
+            flex-wrap: wrap;
+            width: 100%;
+            height: calc(100% - 60px); /* Adjusted for header */
+            overflow: hidden;
+        }
+        .stream-box {
+            box-sizing: border-box;
+            overflow: hidden;
+            padding: 2px;
+        }
+        .stream {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: relative;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
+        .green .stream-box {
+            border: 2px solid #00ff00;
+        }
+        .purple .stream-box {
+            border: 2px solid #800080;
+        }
+        .black .stream-box {
+            border: 2px solid #ffffff;
+        }
+        .light .stream-box {
+            border: 2px solid #008080;
+        }
+        .donate-button {
+            padding: 5px 10px;
+            margin: 0 5px;
+            cursor: pointer;
+            border: none;
+            background-color: #f39c12;
+            color: #000;
+            font-size: 16px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0,0,0);
+            background-color: rgba(0,0,0,0.4);
+            padding-top: 60px;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+         <script>
+            function openModal() {
+                document.getElementById('donationModal').style.display = 'block';
+            }
+    
+            function closeModal() {
+                document.getElementById('donationModal').style.display = 'none';
+            }
+        </script>
+</head>
+<body class="{{ theme }}">
+    <div class="header">
+        <div class="left change-streams">
+            {% for index in range(2) %}
+                {% if index < selected_streams|length %}
+                    <form action="/change_stream" method="post">
+                        <input type="hidden" name="index" value="{{ index }}">
+                        <input type="text" name="name" placeholder="Enter streamer name">
+                        <button type="submit" class="change-stream-button">Change</button>
+                    </form>
+                {% endif %}
+            {% endfor %}
+        </div>
+        <div class="theme-selection">
+            <form action="/select_theme" method="post">
+                <button type="submit" name="theme" value="green" class="theme-button green-button">Kick Theme</button>
+                <button type="submit" name="theme" value="purple" class="theme-button purple-button">CX Theme</button>
+            </form>
+        </div>
+        <h1><a href="/">Live Streams</a></h1>
+        <div class="theme-selection">
+            <form action="/select_theme" method="post">
+                <button type="submit" name="theme" value="black" class="theme-button black-button">Black Theme</button>
+                <button type="submit" name="theme" value="light" class="theme-button light-button">Teal Theme</button>
+            </form>
+        </div>
+        <div class="right change-streams">
+            {% for index in range(2, 4) %}
+                {% if index < selected_streams|length %}
+                    <form action="/change_stream" method="post">
+                        <input type="hidden" name="index" value="{{ index }}">
+                        <input type="text" name="name" placeholder="Enter streamer name">
+                        <button type="submit" class="change-stream-button">Change</button>
+                    </form>
+                {% endif %}
+            {% endfor %}
+        </div>
+        <button class="donate-button" onclick="openModal()">Donate</button>
+    </div>
+    <div id="donationModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Support Us</h2>
+            <p>Ethereum Address: <strong>0x2D42736Cb5906C19aAc3AeF1CBe7AcC3A647c5D4</strong></p>
+            <p>Bitcoin Address: <strong>bc1qrgxt0r4y3tfm6plwx2cdd3yzvymmyzj9wum5mg</strong></p>
+            <p>CashApp: <strong>$CyberDefender</strong></p>
+            <p>Email: <strong>support@themultistream.com</strong></p>
+        </div>
+    </div>
+    <div class="stream-container">
+        {% for stream_url in selected_streams %}
+            <div class="stream-box" style="
+                flex: {% if selected_streams|length == 1 %} 0 0 100%;
+                      {% elif selected_streams|length == 2 %} 0 0 50%;
+                      {% elif selected_streams|length == 3 %} 0 0 33.33%;
+                      {% else %} 0 0 50%; {% endif %}
+                height: {% if selected_streams|length == 1 %} 100%;
+                        {% elif selected_streams|length == 2 %} 100%;
+                        {% elif selected_streams|length == 3 %} 50%;
+                        {% else %} 50%; {% endif %}">
+                <div class="stream">
+                    <iframe src="{{ stream_url }}" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</body>
+</html>

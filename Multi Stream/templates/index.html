@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Stream Viewer</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            font-family: Arial, sans-serif;
+            background-color: #0e0e0e;
+            background-image: url('{% if theme == 'green' %}/static/images/kick_bg.png{% elif theme == 'purple' %}/static/images/cx_bg.png{% elif theme == 'black' %}/static/images/black_bg.png{% else %}/static/images/light_bg.png{% endif %}');
+            background-size: cover;
+            color: {% if theme == 'green' %}#00ff00{% elif theme == 'purple' %}#800080{% elif theme == 'black' %}#ffffff{% else %}#ffffff{% endif %};
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        .theme-selection {
+            margin: 20px 0;
+        }
+        .theme-button {
+            padding: 10px 20px;
+            margin: 0 10px;
+            cursor: pointer;
+            border: none;
+            color: #000;
+        }
+        .green-button {
+            background-color: #00ff00;
+        }
+        .purple-button {
+            background-color: #800080;
+        }
+        .black-button {
+            background-color: #000000;
+            color: #ffffff;
+        }
+        .light-button {
+            background-color: #008080;
+            color: #ffffff;
+        }
+        .selection-form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .selection-form select, .selection-form input {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid {% if theme == 'green' %}#00ff00{% elif theme == 'purple' %}#800080{% elif theme == 'black' %}#ffffff{% else %}#008080{% endif %};
+            background-color: #161616;
+            color: {% if theme == 'green' %}#00ff00{% elif theme == 'purple' %}#800080{% elif theme == 'black' %}#ffffff{% else %}#ffffff{% endif %};
+            width: 300px;
+        }
+        .selection-form button {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            color: #000;
+            background-color: {% if theme == 'green' %}#00ff00{% elif theme == 'purple' %}#800080{% elif theme == 'black' %}#ffffff{% else %}#008080{% endif %};
+        }
+        .donate-button {
+            padding: 10px 20px;
+            margin: 20px;
+            cursor: pointer;
+            border: none;
+            background-color: #f39c12;
+            color: #000;
+            font-size: 16px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            padding-top: 60px;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            color: #000; /* Set the text color to black */
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+    <script>
+        function openModal() {
+            document.getElementById('donationModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('donationModal').style.display = 'none';
+        }
+
+        function validateAndSubmit() {
+            var form = document.getElementById('selection-form');
+            var inputs = form.querySelectorAll('input[name="name"]');
+            var filledInputs = 0;
+
+            inputs.forEach(function(input) {
+                if (input.value.trim() !== "") {
+                    filledInputs++;
+                } else {
+                    input.remove();
+                }
+            });
+
+            if (filledInputs > 0 && filledInputs <= 4) {
+                form.submit();
+            } else {
+                alert('Please enter between 1 and 4 stream names.');
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>Type Streamers KICK name to Watch</h1>
+    <form action="/select_theme" method="post" class="theme-selection">
+        <button type="submit" name="theme" value="green" class="theme-button green-button">Kick Theme</button>
+        <button type="submit" name="theme" value="purple" class="theme-button purple-button">CX Theme</button>
+        <button type="submit" name="theme" value="black" class="theme-button black-button">Black Theme</button>
+        <button type="submit" name="theme" value="light" class="theme-button light-button">Teal Theme</button>
+    </form>
+    <form id="selection-form" action="/select_streams" method="post" class="selection-form" onsubmit="event.preventDefault(); validateAndSubmit();">
+        {% for i in range(4) %}
+            <div>
+                <select name="platform" disabled>
+                    <option value="{{ available_platforms[0].url }}">{{ available_platforms[0].name }}</option>
+                </select>
+                <input type="text" name="name" placeholder="Enter streamer name">
+            </div>
+        {% endfor %}
+        <button type="submit">Watch Streams</button>
+    </form>
+    <button class="donate-button" onclick="openModal()">Donate</button>
+
+    <div id="donationModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Support Us</h2>
+            <p>Eth Address: <strong>0x2D42736Cb5906C19aAc3AeF1CBe7AcC3A647c5D4</strong></p>
+            <p>Bitcoin Address: <strong>bc1qrgxt0r4y3tfm6plwx2cdd3yzvymmyzj9wum5mg</strong></p>
+            <p>CashApp: <strong>$CyberDefender</strong></p>
+            <p>Email: <strong>support@themultistream.com</strong></p>
+        </div>
+    </div>
+</body>
+</html>
